@@ -1,12 +1,13 @@
 #include <FastLED.h>
-#define LEDS_PER_PART   30
-#define MOTION_SENSOR   0
+#define LEDS_PER_PART     30
+#define ARROW_WIDTH       3
 
-#define ARROW_WIDTH     3
-
-#define BRIGHTNESS  255
+#define BRIGHTNESS        255
 
 #define NR_OF_STAIR_STEPS 7
+
+#define BOTTOM_SENSOR     6
+#define UPPER_SENSOR      7
 
 typedef enum { LEFT = 0, RIGHT, BOTH } runDirectionType;
 
@@ -72,27 +73,91 @@ void setup() {
     iLedsCenter++;
   }
 
-  pinMode(MOTION_SENSOR, INPUT);
+  pinMode(BOTTOM_SENSOR, INPUT);
+  pinMode(UPPER_SENSOR, INPUT);
   FastLED.setBrightness(  BRIGHTNESS );
 
   Serial.begin(9600);
 }
 
 void loop() {
-  runPattern(startPattern, Stair);
-  runArrowOverPattern(Stair);
-  runArrowOverPattern(Stair);
-  runArrowOverPattern(Stair);
-  delay(2000);
-  runPattern(fadeOutPattern, Stair);
-  startPattern.CHSVHue += LEDS_PER_PART*2;
+  if (digitalRead(BOTTOM_SENSOR)) {
+    bWalkingDirection = false;
+    runPattern(startPattern, Stair);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    delay(2000);
+    runPattern(fadeOutPattern, Stair);
+  }
+  else if (digitalRead(UPPER_SENSOR)) {
+    bWalkingDirection = true;
+    runPattern(startPattern, Stair);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    delay(2000);
+    runPattern(fadeOutPattern, Stair);
+  }
+  else {
+    // do nothing
+  }
+  
+  startPattern.CHSVHue += LEDS_PER_PART * 2;
 }
 
 void runPattern(pattern_struct patternToRun, stair_struct * Stair) {
   // Walking down the stairs
   if (bWalkingDirection) {
-    for (int i = NR_OF_STAIR_STEPS - 1; i >= 0; i--) {
+    switch (patternToRun.runDirection) {
+      case LEFT:
 
+        break;
+
+      case RIGHT:
+
+        break;
+
+      case BOTH:
+        {
+          // Set all runningIndexes and hues to the default of the pattern.
+          for (int iStep = 0; iStep < NR_OF_STAIR_STEPS; iStep++) {
+            Stair[iStep].runningIndex = patternToRun.startIndex;
+            Stair[iStep].hue = patternToRun.CHSVHue;
+          }
+
+          int j = Stair[NR_OF_STAIR_STEPS - 1].runningIndex;
+          int iRunningSteps = NR_OF_STAIR_STEPS - 2;  // If NR_OF_STAIR_STEPS were 8, an array only counts to 7 (so -1) but we want the for loop below to at least run 1 time, that makes it -2
+
+          // Keep this pattern running until the last step of the stair has reached the end of the animation
+          while (Stair[0].runningIndex <= patternToRun.maxIndex) {
+            // Simultanously running the animations per step of the stairs.
+            for (int i = NR_OF_STAIR_STEPS - 1; i > iRunningSteps; i--) {
+              // Only run the steps which aren't done animating
+              if (Stair[i].runningIndex <= patternToRun.maxIndex) {
+                Stair[i].LedArray[Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
+                Stair[i].LedArray[patternToRun.maxIndex - 1 - Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
+                Stair[i].hue += patternToRun.hueIncrement;
+                Stair[i].runningIndex++;
+              }
+            }
+
+            // Depending on the delay we have issued in the delayNext variable in the pattern struct, we will increment j and iRunningsteps.
+            if (j < patternToRun.maxIndex || j > patternToRun.minIndex) {
+              j++;
+              if ( j >= patternToRun.delayNext && iRunningSteps > 0 ) {
+                iRunningSteps--;
+                j = Stair[iRunningSteps].runningIndex;
+              }
+            }
+
+            // Determine the speed of the animation.
+            FastLED.delay(patternToRun.fadeInSpeed);
+          }
+
+          Serial.println("Pattern Finished!");
+        }
+        break;
     }
   }
   // walking up the stairs
@@ -123,13 +188,9 @@ void runPattern(pattern_struct patternToRun, stair_struct * Stair) {
             for (int i = 0; i < iRunningSteps; i++) {
               // Only run the steps which aren't done animating
               if (Stair[i].runningIndex <= patternToRun.maxIndex) {
-                Stair[i].LedArray[Stair[i].runningIndex - 1] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
+                Stair[i].LedArray[Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
+                Stair[i].LedArray[patternToRun.maxIndex - 1 - Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
                 Stair[i].hue += patternToRun.hueIncrement;
-                if (i == 0) {
-                  Serial.print("Hue stair 1 = ");
-                  Serial.println(Stair[i].hue);
-                }
-                Stair[i].LedArray[patternToRun.maxIndex - Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
                 Stair[i].runningIndex++;
               }
             }
