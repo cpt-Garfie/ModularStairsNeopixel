@@ -1,12 +1,12 @@
 #include <FastLED.h>
-#define LEDS_PER_PART   300
+#define LEDS_PER_PART   30
 #define MOTION_SENSOR   0
 
-#define ARROW_WIDTH     5
+#define ARROW_WIDTH     3
 
 #define BRIGHTNESS  255
 
-#define NR_OF_STAIR_STEPS 3
+#define NR_OF_STAIR_STEPS 7
 
 typedef enum { LEFT = 0, RIGHT, BOTH } runDirectionType;
 
@@ -25,6 +25,7 @@ typedef struct {
   uint8_t CHSVHue;
   uint8_t CHSVSaturation;
   uint8_t CHSVBrightness;
+  uint8_t hueIncrement;
   runDirectionType runDirection;
 } pattern_struct;
 
@@ -32,30 +33,40 @@ int iLedsCenter = LEDS_PER_PART / 2;
 
 bool bWalkingDirection = false;
 
-const pattern_struct startPattern { iLedsCenter, 0, LEDS_PER_PART, 30, (LEDS_PER_PART / 4 * 3), 0, 255, 255, BOTH };
-const pattern_struct fadeOutPattern { 0, 0, LEDS_PER_PART, 20, (LEDS_PER_PART / 4), 0, 0, 0, BOTH };
+pattern_struct startPattern { iLedsCenter, 0, LEDS_PER_PART, 30, (LEDS_PER_PART / 4 * 3), 0, 255, 255, 2, BOTH };
+const pattern_struct fadeOutPattern { 0, 0, LEDS_PER_PART, 20, (LEDS_PER_PART / 4), 0, 0, 0, 0, BOTH };
 
 CRGB LedArray1[LEDS_PER_PART];
 CRGB LedArray2[LEDS_PER_PART];
 CRGB LedArray3[LEDS_PER_PART];
+CRGB LedArray4[LEDS_PER_PART];
+CRGB LedArray5[LEDS_PER_PART];
+CRGB LedArray6[LEDS_PER_PART];
+CRGB LedArray7[LEDS_PER_PART];
 
-stair_struct Stair[NR_OF_STAIR_STEPS] = { 0 };
+volatile stair_struct Stair[NR_OF_STAIR_STEPS] = { 0 };
 
 void runPattern(pattern_struct patternToRun, stair_struct * Stair);
 void runArrowOverPattern(stair_struct * Stair);
-void runPartNumber(int iPart, stair_struct * Stair);
-void fadePartNumber(int iPart, stair_struct * Stair);
 
 void setup() {
   // Add the steps to the neopixel class
-  FastLED.addLeds<NEOPIXEL, 6>(LedArray1, LEDS_PER_PART);
-  FastLED.addLeds<NEOPIXEL, 5>(LedArray2, LEDS_PER_PART);
-  FastLED.addLeds<NEOPIXEL, 2>(LedArray3, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 31>(LedArray1, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 33>(LedArray2, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 35>(LedArray3, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 37>(LedArray4, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 39>(LedArray5, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 41>(LedArray6, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 43>(LedArray7, LEDS_PER_PART);
 
   // Initialize the stair structure
   Stair[0].LedArray = LedArray1;
   Stair[1].LedArray = LedArray2;
   Stair[2].LedArray = LedArray3;
+  Stair[3].LedArray = LedArray4;
+  Stair[4].LedArray = LedArray5;
+  Stair[5].LedArray = LedArray6;
+  Stair[6].LedArray = LedArray7;
 
   if (LEDS_PER_PART % 2) {
     iLedsCenter++;
@@ -72,8 +83,9 @@ void loop() {
   runArrowOverPattern(Stair);
   runArrowOverPattern(Stair);
   runArrowOverPattern(Stair);
-  //  delay(2000);
-  //  runPattern(fadeOutPattern, Stair);
+  delay(2000);
+  runPattern(fadeOutPattern, Stair);
+  startPattern.CHSVHue += LEDS_PER_PART*2;
 }
 
 void runPattern(pattern_struct patternToRun, stair_struct * Stair) {
@@ -96,9 +108,10 @@ void runPattern(pattern_struct patternToRun, stair_struct * Stair) {
 
       case BOTH:
         {
-          // Set all runningIndexes to the start index of the pattern.
+          // Set all runningIndexes and hues to the default of the pattern.
           for (int iStep = 0; iStep < NR_OF_STAIR_STEPS; iStep++) {
             Stair[iStep].runningIndex = patternToRun.startIndex;
+            Stair[iStep].hue = patternToRun.CHSVHue;
           }
 
           int j = Stair[0].runningIndex;
@@ -111,7 +124,11 @@ void runPattern(pattern_struct patternToRun, stair_struct * Stair) {
               // Only run the steps which aren't done animating
               if (Stair[i].runningIndex <= patternToRun.maxIndex) {
                 Stair[i].LedArray[Stair[i].runningIndex - 1] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
-                Stair[i].hue += 2;
+                Stair[i].hue += patternToRun.hueIncrement;
+                if (i == 0) {
+                  Serial.print("Hue stair 1 = ");
+                  Serial.println(Stair[i].hue);
+                }
                 Stair[i].LedArray[patternToRun.maxIndex - Stair[i].runningIndex] = CHSV(Stair[i].hue, patternToRun.CHSVSaturation, patternToRun.CHSVBrightness);
                 Stair[i].runningIndex++;
               }
@@ -163,9 +180,10 @@ void runArrowOverPattern(stair_struct * Stair) {
       }
 
       if (Stair[i].runningIndex > LEDS_PER_PART) {
+        // Last part to erase
         for (int erase = ARROW_WIDTH - 1; erase >= 0; erase--) {
           Stair[i].LedArray[erase] = CHSV(Stair[i].hue, 255, 255);
-          Stair[i].LedArray[LEDS_PER_PART - 1 - erase] = Stair[2].LedArray[erase];
+          Stair[i].LedArray[LEDS_PER_PART - 1 - erase] = Stair[i].LedArray[erase];
         }
       }
       else if (Stair[i].runningIndex > iLedsCenter + (ARROW_WIDTH - 1)) {
@@ -178,8 +196,6 @@ void runArrowOverPattern(stair_struct * Stair) {
           Stair[i].LedArray[LEDS_PER_PART - j] = CHSV(Stair[i].hue, 255, 255);
         }
       }
-
-
     }
 
     // Depending on the delay we have issued in the delayNext variable in the pattern struct, we will increment j and iRunningsteps.
@@ -196,52 +212,4 @@ void runArrowOverPattern(stair_struct * Stair) {
   }
 
   Serial.println("Pattern Finished!");
-  //
-  //  for (int i = iLedsCenter; i > 0; i--) {
-  //    // let's set an led value
-  //    Stair[2].LedArray[i - 1] = CHSV(0, 0, 180);
-  //    if (LEDS_PER_PART % 2 && i == iLedsCenter) {
-  //      Stair[2].LedArray[LEDS_PER_PART - i + 1] =  CHSV(0, 0, 180);
-  //    }
-  //    else {
-  //      Stair[2].LedArray[LEDS_PER_PART - i] =  CHSV(0, 0, 180);
-  //    }
-  //    if (i < iLedsCenter - (ARROW_WIDTH - 1)) {
-  //      int j = i + ARROW_WIDTH;
-  //      Stair[2].LedArray[j - 1] = CHSV(Stair[2].hue, 255, 255);
-  //      if (LEDS_PER_PART % 2 && j == iLedsCenter) {
-  //        Stair[2].LedArray[LEDS_PER_PART - j + 1] = CHSV(Stair[2].hue, 255, 255);
-  //      }
-  //      else {
-  //        Stair[2].LedArray[LEDS_PER_PART - j] = CHSV(Stair[2].hue, 255, 255);
-  //      }
-  //    }
-  //    FastLED.delay(30);
-  //  }
-  //
-  //  for (int i = ARROW_WIDTH - 1; i >= 0; i--) {
-  //    Stair[2].LedArray[i] = CHSV(Stair[2].hue, 255, 255);
-  //    Stair[2].LedArray[LEDS_PER_PART - 1 - i] = Stair[2].LedArray[i];
-  //    FastLED.delay(30);
-  //  }
-}
-
-void runPartNumber(int iPart, stair_struct * Stair) {
-  for (int i = iLedsCenter; i >= 0; i--) {
-    // let's set an led value
-    Stair->LedArray[i + iPart] = CHSV(Stair->hue++, 255, 255);
-    Stair->LedArray[LEDS_PER_PART - i + iPart] = Stair->LedArray[i + iPart];
-    Serial.println(Stair->hue);
-    FastLED.delay(33);
-  }
-}
-
-void fadePartNumber(int iPart, stair_struct * Stair) {
-  for (int i = 0; i <= iLedsCenter; i++) {
-    // let's set an led value
-    Stair->LedArray[i + iPart] = CHSV(0, 0, 0);
-    Stair->LedArray[LEDS_PER_PART - i + iPart] = Stair->LedArray[i + iPart];
-    Serial.println(Stair->hue);
-    FastLED.delay(33);
-  }
 }
