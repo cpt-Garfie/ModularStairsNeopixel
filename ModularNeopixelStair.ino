@@ -4,7 +4,7 @@
 
 #define BRIGHTNESS        255
 
-#define NR_OF_STAIR_STEPS 7
+#define NR_OF_STAIR_STEPS 16
 
 #define BOTTOM_SENSOR     6
 #define UPPER_SENSOR      7
@@ -45,6 +45,16 @@ CRGB LedArray5[LEDS_PER_PART];
 CRGB LedArray6[LEDS_PER_PART];
 CRGB LedArray7[LEDS_PER_PART];
 
+CRGB LedArray8[LEDS_PER_PART];
+CRGB LedArray9[LEDS_PER_PART];
+CRGB LedArray10[LEDS_PER_PART];
+CRGB LedArray11[LEDS_PER_PART];
+CRGB LedArray12[LEDS_PER_PART];
+CRGB LedArray13[LEDS_PER_PART];
+CRGB LedArray14[LEDS_PER_PART];
+CRGB LedArray15[LEDS_PER_PART];
+CRGB LedArray16[LEDS_PER_PART];
+
 volatile stair_struct Stair[NR_OF_STAIR_STEPS] = { 0 };
 
 void runPattern(pattern_struct patternToRun, stair_struct * Stair);
@@ -60,6 +70,16 @@ void setup() {
   FastLED.addLeds<NEOPIXEL, 41>(LedArray6, LEDS_PER_PART);
   FastLED.addLeds<NEOPIXEL, 43>(LedArray7, LEDS_PER_PART);
 
+  FastLED.addLeds<NEOPIXEL, 30>(LedArray8, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 32>(LedArray9, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 34>(LedArray10, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 36>(LedArray11, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 38>(LedArray12, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 40>(LedArray13, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 42>(LedArray14, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 44>(LedArray15, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 46>(LedArray16, LEDS_PER_PART);
+
   // Initialize the stair structure
   Stair[0].LedArray = LedArray1;
   Stair[1].LedArray = LedArray2;
@@ -68,6 +88,16 @@ void setup() {
   Stair[4].LedArray = LedArray5;
   Stair[5].LedArray = LedArray6;
   Stair[6].LedArray = LedArray7;
+
+  Stair[7].LedArray = LedArray8;
+  Stair[8].LedArray = LedArray9;
+  Stair[9].LedArray = LedArray10;
+  Stair[10].LedArray = LedArray11;
+  Stair[11].LedArray = LedArray12;
+  Stair[12].LedArray = LedArray13;
+  Stair[13].LedArray = LedArray14;
+  Stair[14].LedArray = LedArray15;
+  Stair[15].LedArray = LedArray16;
 
   if (LEDS_PER_PART % 2) {
     iLedsCenter++;
