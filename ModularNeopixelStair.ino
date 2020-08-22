@@ -70,7 +70,7 @@ void setup() {
   FastLED.addLeds<NEOPIXEL, 41>(LedArray6, LEDS_PER_PART);
   FastLED.addLeds<NEOPIXEL, 43>(LedArray7, LEDS_PER_PART);
 
-  FastLED.addLeds<NEOPIXEL, 30>(LedArray8, LEDS_PER_PART);
+  FastLED.addLeds<NEOPIXEL, 45>(LedArray8, LEDS_PER_PART);
   FastLED.addLeds<NEOPIXEL, 32>(LedArray9, LEDS_PER_PART);
   FastLED.addLeds<NEOPIXEL, 34>(LedArray10, LEDS_PER_PART);
   FastLED.addLeds<NEOPIXEL, 36>(LedArray11, LEDS_PER_PART);
@@ -117,7 +117,9 @@ void loop() {
     runArrowOverPattern(Stair);
     runArrowOverPattern(Stair);
     runArrowOverPattern(Stair);
-    delay(2000);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    delay(5000);
     runPattern(fadeOutPattern, Stair);
   }
   else if (digitalRead(UPPER_SENSOR)) {
@@ -126,7 +128,9 @@ void loop() {
     runArrowOverPattern(Stair);
     runArrowOverPattern(Stair);
     runArrowOverPattern(Stair);
-    delay(2000);
+    runArrowOverPattern(Stair);
+    runArrowOverPattern(Stair);
+    delay(5000);
     runPattern(fadeOutPattern, Stair);
   }
   else {
